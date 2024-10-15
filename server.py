@@ -1,22 +1,20 @@
 from flask import Flask, request, jsonify
 import numpy as np
+from quantum_simulator import *
 
 app = Flask(__name__)
 
 # 매트릭스 곱셈을 처리할 엔드포인트 설정
-@app.route('/matrix_multiply', methods=['POST'])
-def matrix_multiply():
+@app.route('/observe_circuit', methods=['POST'])
+def observe_circuit():
     try:
-        # 요청에서 두 개의 매트릭스 받기
+        # request body에서 get json을 통해 data json형태로 받아옴
         data = request.get_json()
-        matrix_a = np.array(data['matrix_a'])
-        matrix_b = np.array(data['matrix_b'])
         
-        # 매트릭스 곱셈 수행을 여기서 진행
-        result = np.dot(matrix_a, matrix_b)
+        server_qc = quantum_circuit(data)
         
         # 결과를 json으로 리턴
-        return jsonify({'result': result.tolist()}), 200
+        return jsonify({'result': server_qc.run()}), 200
     
     # 에러가 나면 json으로 에러 리턴
     except Exception as e:
