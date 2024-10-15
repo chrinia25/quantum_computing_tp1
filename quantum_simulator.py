@@ -64,7 +64,6 @@ class quantum_circuit:
         for layer in self.layers:
             quantum_state = np.matmul(layer.matrix, quantum_state)
         probability = [np.absolute(p)**2 for p in quantum_state]
-        print(quantum_state)
         self.calculation_result = probability
         
 
@@ -106,7 +105,6 @@ class quantum_circuit_layer:
                 else:
                     gate = quantum_gate(layer_info[i])
                 target_qubit = i
-                print("applied", gate)
                 temp_matrix = np.array([[1]], dtype = np.clongdouble)
                 for i in range(len(layer_info)):
                     if i != target_qubit:
@@ -121,7 +119,6 @@ class quantum_circuit_layer:
                             if i % (2 ** (len(layer_info) - control_qubit)) < (2 ** (len(layer_info) - control_qubit - 1)):
                                 temp_matrix[i] = identity_matrix[i]
                                 break
-                print(temp_matrix)
                 self.matrix = np.matmul(temp_matrix, self.matrix)
 
 
