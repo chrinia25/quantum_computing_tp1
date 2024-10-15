@@ -82,7 +82,7 @@ class quantum_circuit:
         output = []
         for i in range(self.register_count):
             output.append(0 if int(observed_state / 2**(i)) % 2 == 0 else 1)
-        return output
+        return list(reversed(output))
 
 class quantum_circuit_layer:
     def __init__(self, layer_info: list, custom_gate_dict : list):
