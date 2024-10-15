@@ -10,7 +10,7 @@ class quantum_gate:
             case "X":
                 self.matrix = np.array([[0, 1],[1, 0]], dtype  = np.clongdouble)
             case "Y":
-                self.matrix = np.array([0, -1j],[1j, 0], dtype = np.clongdouble)
+                self.matrix = np.array([[0, -1j],[1j, 0]], dtype = np.clongdouble)
             case "Z":
                 self.matrix = np.array([[1, 0],[0, -1]], dtype = np.clongdouble)
             case "H":
@@ -30,9 +30,10 @@ class quantum_gate:
         return self.matrix.__str__()
 
 class quantum_circuit:
-    def __init__(self, filename):
-        with open(filename, "r") as f:      
-            data = json.load(f)
+    def __init__(self, filename = None, data = None):
+        if filename:
+            with open(filename, "r") as f:      
+                data = json.load(f)
         self._load_registers(data["registers"])
         self.layers = []
         self.custom_gates = {}
@@ -47,10 +48,10 @@ class quantum_circuit:
         first = True
         for register in registers:
             if first:
-                temp_register = np.array([complex(register[0]), complex(register[1])], dtype=np.clongdouble)
+                temp_register = np.array([[complex(register[0]), complex(register[1])]], dtype=np.clongdouble)
                 first = False
             else:
-                temp_register = np.kron(np.array([complex(register[0]), complex(register[1])], dtype=np.clongdouble), temp_register)
+                temp_register = np.kron(temp_register, np.array([[complex(register[0]), complex(register[1])]], dtype=np.clongdouble))
         self.registers = temp_register
 
     def run(self) -> list:
@@ -59,10 +60,11 @@ class quantum_circuit:
         return self.observe()
 
     def calculate_result(self) -> None:
-        quantum_state = self.registers
+        quantum_state = self.registers.T
         for layer in self.layers:
-            quantum_state = layer * quantum_state
+            quantum_state = np.matmul(layer.matrix, quantum_state)
         probability = [np.absolute(p)**2 for p in quantum_state]
+        print(quantum_state)
         self.calculation_result = probability
         
 
@@ -83,15 +85,6 @@ class quantum_circuit:
             output.append(0 if int(observed_state / 2**(i)) % 2 == 0 else 1)
         return output
 
-
-def apply_gate_local(matrix : np.array, gate : quantum_gate, row1 : int, row2: int) -> None:
-    template = np.array([[matrix[row1,row1], matrix[row1,row2]], [matrix[row2,row1], matrix[row2,row2]]])
-    template = gate * template
-    matrix[row1, row1] = template[0,0]
-    matrix[row1, row2] = template[0,1]
-    matrix[row2, row1] = template[1,0]
-    matrix[row2, row2] = template[1,1]
-
 class quantum_circuit_layer:
     def __init__(self, layer_info: list, custom_gate_dict : list):
         self.make_matrix(layer_info, custom_gate_dict)
@@ -101,7 +94,7 @@ class quantum_circuit_layer:
         controls = {}
         for i in range(len(layer_info)):
             if layer_info[i][0] == 'c':
-                control_target = layer_info[i][1]
+                control_target = int(layer_info[i][1:])
                 if control_target not in controls.keys():
                     controls[control_target] = []
                 controls[control_target].append(i)
@@ -113,23 +106,24 @@ class quantum_circuit_layer:
                 else:
                     gate = quantum_gate(layer_info[i])
                 target_qubit = i
-                print(gate)
-                print(self.matrix)
-                if target_qubit not in controls.keys():
-                    for j in range(2**len(layer_info)):
-                        if j % (2 ** (target_qubit + 1)) == 0:
-                            apply_gate_local(self.matrix, gate, j, j + 2**target_qubit)
-                else:
+                print("applied", gate)
+                temp_matrix = np.array([[1]], dtype = np.clongdouble)
+                for i in range(len(layer_info)):
+                    if i != target_qubit:
+                        temp_matrix = np.kron(temp_matrix, np.eye(2, dtype = np.clongdouble),)
+                    else:
+                        temp_matrix = np.kron(temp_matrix, gate.matrix)
+                if target_qubit in controls.keys():
+                    identity_matrix = np.eye(2**len(layer_info))
                     control_qubits = controls[target_qubit]
-                    for j in range(2**len(layer_info)):
-                        if j % (2 ** (target_qubit + 1)) == 0:
-                            flag = True
-                            for control_qubit in control_qubits:
-                                if j % (2 ** (control_qubit + 1)) == 1:
-                                    flag = False
-                                    break
-                            if flag == True:
-                                apply_gate_local(self.matrix, gate, j, j + 2**target_qubit)
+                    for i in range(2**len(layer_info)):
+                        for control_qubit in control_qubits:
+                            if i % (2 ** (len(layer_info) - control_qubit)) < (2 ** (len(layer_info) - control_qubit - 1)):
+                                temp_matrix[i] = identity_matrix[i]
+                                break
+                print(temp_matrix)
+                self.matrix = np.matmul(temp_matrix, self.matrix)
+
 
     def __mul__(self, val):
         if isinstance(val, np.ndarray):
