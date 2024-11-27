@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 import numpy as np
-from gatle import set_game
+from gatle import play_game, set_game
 from quantum_simulator import *
 
 app = Flask(__name__)
@@ -31,6 +31,16 @@ def get_game():
     return jsonify({
         'n_bits': game['n_bits']
         }), 200
+
+@app.route('/game/submit', methods=['POST'])
+def submit_game():
+    body = request.get_json()
+    result = play_game(body)
+    
+    return jsonify({
+        
+        'correct': result['correct']
+    }), 200
 
 if __name__ == '__main__':
     # 서버 실행

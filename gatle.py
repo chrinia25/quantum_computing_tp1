@@ -26,6 +26,12 @@ def play_game(data):
     bin_answer = bin(answer)[2:]
     bin_answer = [int(digit) for digit in bin_answer]
     
+    correct = [a == b for a, b in zip(bin_answer, observed)]
+    
+    return {
+        'correct': correct
+    }
+    
     
     
 if __name__ == '__main__':
