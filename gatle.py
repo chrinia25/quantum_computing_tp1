@@ -13,10 +13,12 @@ def set_game() -> tuple[int]:
     set_day_seed()
     n_bit = random.randint(4,8)
     answer = random.randint(1, 2 ** n_bit) - 1
-
+    init_qubits = permute_qubits(n_bit)
+    
     return {
         'n_bits': n_bit, 
-        'answer' : answer
+        'answer' : answer,
+        'init_qubits': init_qubits
         }
 
 KET_0 = np.array([[1], [0]], dtype=np.clongdouble)
@@ -35,8 +37,7 @@ def play_game(data):
     random.seed()
     
     circuit = quantum_circuit(data=data)
-    qubits = permute_qubits(game['n_bits'])
-    r = circuit.set_registers(qubits)
+    r = circuit.set_registers(game['init_qubits'])
 
     # set register
     observed = circuit.run()
