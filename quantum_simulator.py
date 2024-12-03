@@ -43,15 +43,17 @@ class quantum_circuit:
             self.layers.append(quantum_circuit_layer(layer, self.custom_gates))
         self.calculation_result = None
         self.register_count = data["register_count"]
-
-    def _load_registers(self, registers):
-        first = True
+    def set_registers(self, registers):
+        r = np.array([1])
         for register in registers:
-            if first:
-                temp_register = np.array([[complex(register[0]), complex(register[1])]], dtype=np.clongdouble)
-                first = False
-            else:
-                temp_register = np.kron(temp_register, np.array([[complex(register[0]), complex(register[1])]], dtype=np.clongdouble))
+            r = np.kron(r, register.reshape((1,-1)))
+        self.registers = r
+        return r
+        
+    def _load_registers(self, registers):
+        temp_register = np.array([[complex(registers[0][0]), complex(registers[0][1])]], dtype=np.clongdouble)
+        for register in registers[1:]:
+            temp_register = np.kron(temp_register, np.array([[complex(register[0]), complex(register[1])]], dtype=np.clongdouble))
         self.registers = temp_register
 
     def run(self) -> list:
