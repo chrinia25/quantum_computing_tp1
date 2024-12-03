@@ -16,7 +16,7 @@ def observe_circuit():
         # request body에서 get json을 통해 data json형태로 받아옴
         data = request.get_json()
         
-        server_qc = quantum_circuit(data)
+        server_qc = quantum_circuit(data= data)
         
         # 결과를 json으로 리턴
         return jsonify({'result': server_qc.run()}), 200

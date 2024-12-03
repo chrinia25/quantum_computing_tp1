@@ -1,3 +1,5 @@
+import numpy as np
+
 import random
 from datetime import date
 
@@ -16,16 +18,31 @@ def set_game() -> tuple[int]:
         'n_bits': n_bit, 
         'answer' : answer
         }
+
+KET_0 = np.array([[1], [0]], dtype=np.clongdouble)
+KET_1 = np.array([[0], [1]], dtype=np.clongdouble)
+
+KET_PLUS = (KET_0 + KET_1) / np.sqrt(2)
+KET_MINUS = (KET_0 - KET_1) / np.sqrt(2)
+
+STATES = [KET_0, KET_1, KET_PLUS, KET_MINUS]
+
+def permute_qubits(n_bit):
+    return np.array([random.choice(STATES) for _ in range(n_bit)])
     
 def play_game(data):
-    n_bit, answer = set_game()
-    
+    game = set_game()
     random.seed()
-    observed = quantum_circuit(data)
     
-    bin_answer = bin(answer)[2:]
+    circuit = quantum_circuit(data=data)
+    qubits = permute_qubits(game['n_bits'])
+    r = circuit.set_registers(qubits)
+
+    # set register
+    observed = circuit.run()
+    
+    bin_answer = bin(game['answer'])[2:]
     bin_answer = [int(digit) for digit in bin_answer]
-    
     correct = [a == b for a, b in zip(bin_answer, observed)]
     
     return {
