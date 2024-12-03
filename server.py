@@ -1,8 +1,13 @@
 from flask import Flask, request, jsonify
 import numpy as np
+from gatle import play_game, set_game
 from quantum_simulator import *
 
 app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    return jsonify({'status': 'ok'}), 200
 
 # 매트릭스 곱셈을 처리할 엔드포인트 설정
 @app.route('/observe_circuit', methods=['POST'])
@@ -19,6 +24,23 @@ def observe_circuit():
     # 에러가 나면 json으로 에러 리턴
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+
+@app.route('/game', methods=['GET'])
+def get_game():
+    game = set_game()
+    return jsonify({
+        'n_bits': game['n_bits']
+        }), 200
+
+@app.route('/game/submit', methods=['POST'])
+def submit_game():
+    body = request.get_json()
+    result = play_game(body)
+    
+    return jsonify({
+        
+        'correct': result['correct']
+    }), 200
 
 if __name__ == '__main__':
     # 서버 실행
