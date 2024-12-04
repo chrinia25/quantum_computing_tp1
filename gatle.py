@@ -42,7 +42,7 @@ def play_game(data):
     # set register
     observed = circuit.run()
     
-    bin_answer = bin(game['answer'])[2:]
+    bin_answer = bin(game['answer'])[2:].zfill(game['n_bits'])
     bin_answer = [int(digit) for digit in bin_answer]
     correct = [a == b for a, b in zip(bin_answer, observed)]
     
